@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { FontAwesomeIcon } from '@fortawesome/react-fontawesome';
 import {
   faUserCheck,
@@ -50,26 +50,32 @@ export default function App() {
     setName('');
   };
 
-  const togglePresence = idx => {
+  const togglePresence = index => {
     setPeople(prev =>
       prev.map((p, i) =>
-        i === idx ? { ...p, present: !p.present } : p
+        i === index ? { ...p, present: !p.present } : p
       )
     );
   };
 
-  const deletePerson = idx => {
+  const deletePerson = index => {
     if (window.confirm('Remover esta pessoa?')) {
-      setPeople(prev => prev.filter((_, i) => i !== idx));
+      setPeople(prev => prev.filter((_, i) => i !== index));
     }
   };
 
-  const filtered = people.filter(p =>
-    p.name.toLowerCase().includes(search.toLowerCase())
+  // Criar lista filtrada com índice original
+  const filteredPeople = useMemo(() =>
+    people
+      .map((p, i) => ({ ...p, originalIndex: i }))
+      .filter(o => o.name.toLowerCase().includes(search.toLowerCase())),
+    [people, search]
   );
-  const total = filtered.length;
-  const present = filtered.filter(p => p.present).length;
-  const absent = total - present;
+
+  // Contadores
+  const totalFiltered = filteredPeople.length;
+  const presentAll = people.filter(p => p.present).length;
+  const absentAll = people.length - presentAll;
 
   return (
     <div className="max-w-3xl mx-auto py-8 px-4">
@@ -87,7 +93,7 @@ export default function App() {
 
       {/* Main */}
       <div className="bg-white rounded-b-xl shadow-md overflow-hidden">
-        {/* Input */}
+        {/* Input & Search */}
         <div className="p-6 border-b border-gray-200 space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-grow">
@@ -110,7 +116,6 @@ export default function App() {
               Adicionar
             </button>
           </div>
-          {/* Search */}
           <div className="relative">
             <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
               <FontAwesomeIcon icon={faSearch} className="text-gray-400" />
@@ -127,22 +132,22 @@ export default function App() {
         {/* Summary */}
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
           <div className="text-gray-700">
-            <span className="font-medium">Total:</span>
-            <span className="ml-2 font-bold">{total}</span>
+            <span className="font-medium">Total Filtrado:</span>
+            <span className="ml-2 font-bold">{totalFiltered}</span>
           </div>
           <div className="text-gray-700">
             <span className="font-medium">Presentes:</span>
-            <span className="ml-2 font-bold text-success-600">{present}</span>
+            <span className="ml-2 font-bold text-success-600">{presentAll}</span>
           </div>
           <div className="text-gray-700">
             <span className="font-medium">Ausentes:</span>
-            <span className="ml-2 font-bold text-danger-600">{absent}</span>
+            <span className="ml-2 font-bold text-danger-600">{absentAll}</span>
           </div>
         </div>
 
         {/* List */}
         <div className="divide-y divide-gray-200">
-          {filtered.length === 0 ? (
+          {filteredPeople.length === 0 ? (
             <div className="p-12 text-center">
               <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <FontAwesomeIcon icon={faUser} className="text-gray-400 text-3xl" />
@@ -151,8 +156,8 @@ export default function App() {
               <p className="text-gray-500">Ajuste a busca ou adicione novos participantes</p>
             </div>
           ) : (
-            filtered.map((person, idx) => (
-              <div key={idx} className="person-card p-4 hover:bg-gray-50">
+            filteredPeople.map(person => (
+              <div key={person.originalIndex} className="person-card p-4 hover:bg-gray-50">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
                     <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
@@ -165,14 +170,14 @@ export default function App() {
                   </div>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => togglePresence(idx)}
+                      onClick={() => togglePresence(person.originalIndex)}
                       className={`${person.present ? 'bg-danger-500 hover:bg-danger-600' : 'bg-success-500 hover:bg-success-600'} text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2`}
                     >
                       <FontAwesomeIcon icon={person.present ? faTimes : faCheck} />
                       {person.present ? 'Marcar Falta' : 'Marcar Presença'}
                     </button>
                     <button
-                      onClick={() => deletePerson(idx)}
+                      onClick={() => deletePerson(person.originalIndex)}
                       className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
                     >
                       <FontAwesomeIcon icon={faTrash} />
