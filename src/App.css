@@ -1,0 +1,37 @@
+:root {
+  --primary: #007bff;
+  --primary-hover: #0056b3;
+  --success: #28a745;
+  --danger: #dc3545;
+  --bg: #f5f5f5;
+  --card-bg: #ffffff;
+  --text-color: #333333;
+}
+* { box-sizing: border-box; }
+body { margin: 0; padding: 0; font-family: Arial, sans-serif; background: var(--bg); color: var(--text-color); }
+.container { max-width: 600px; margin: 20px auto; background: var(--card-bg); border-radius: 10px; box-shadow: 0 4px 12px rgba(0,0,0,0.1); overflow: hidden; }
+header { background: var(--primary); color: #fff; text-align: center; padding: 16px; }
+header h1 { margin: 0; font-size: 1.5rem; }
+.input-group { display: flex; gap: 8px; padding: 16px; }
+.input-group input { flex: 1; padding: 12px; font-size: 1rem; border: 1px solid #ccc; border-radius: 6px; }
+.input-group button { padding: 12px 20px; font-size: 1rem; border: none; background: var(--primary); color: #fff; border-radius: 6px; cursor: pointer; transition: background 0.3s; }
+.input-group button:hover { background: var(--primary-hover); }
+#list { padding: 0 16px; }
+.person { background: var(--card-bg); display: flex; justify-content: space-between; align-items: center; padding: 12px; margin-bottom: 8px; border-radius: 6px; border: 1px solid #ececec; transition: background 0.3s; }
+.person:hover { background: #f0f8ff; }
+.person .status { font-weight: bold; }
+.actions { display: flex; gap: 6px; }
+.actions button { padding: 8px 12px; font-size: 0.875rem; border: none; border-radius: 4px; cursor: pointer; transition: opacity 0.2s; }
+.actions button:hover { opacity: 0.8; }
+.toggleBtn { background: var(--success); color: #fff; }
+.toggleBtn.present { background: var(--danger); }
+.deleteBtn { background: var(--danger); color: #fff; }
+#summary { padding: 16px; text-align: center; font-size: 1.1rem; background: #fafafa; border-top: 1px solid #ececec; }
+@media (max-width: 480px) {
+  .input-group { flex-direction: column; }
+  .input-group button { width: 100%; }
+  .person { flex-direction: column; align-items: flex-start; }
+  .actions { margin-top: 8px; width: 100%; justify-content: space-between; }
+  .actions button { flex: 1; }
+  .actions button + button { margin-left: 4px; }
+}
