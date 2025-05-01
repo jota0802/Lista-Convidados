@@ -7,7 +7,8 @@ import {
   faCheck,
   faTimes,
   faTrash,
-  faSearch
+  faSearch,
+  faEdit
 } from '@fortawesome/free-solid-svg-icons';
 
 const defaultPeople = [
@@ -39,40 +40,61 @@ export default function App() {
   });
   const [name, setName] = useState('');
   const [search, setSearch] = useState('');
+  const [editingIndex, setEditingIndex] = useState(null);
+  const [editingName, setEditingName] = useState('');
 
+  // Persist
   useEffect(() => {
     localStorage.setItem('people', JSON.stringify(people));
   }, [people]);
 
+  // Add
   const addPerson = () => {
     if (!name.trim()) return;
     setPeople(prev => [...prev, { name: name.trim(), present: false }]);
     setName('');
   };
 
+  // Toggle presence
   const togglePresence = index => {
     setPeople(prev =>
-      prev.map((p, i) =>
-        i === index ? { ...p, present: !p.present } : p
-      )
+      prev.map((p, i) => i === index ? { ...p, present: !p.present } : p)
     );
   };
 
+  // Delete
   const deletePerson = index => {
     if (window.confirm('Remover esta pessoa?')) {
       setPeople(prev => prev.filter((_, i) => i !== index));
     }
   };
 
-  // Criar lista filtrada com índice original
+  // Save edit
+  const saveEdit = () => {
+    if (!editingName.trim()) return;
+    setPeople(prev =>
+      prev.map((p, i) => i === editingIndex ? { ...p, name: editingName.trim() } : p)
+    );
+    setEditingIndex(null);
+    setEditingName('');
+  };
+
+  // Cancel edit
+  const cancelEdit = () => {
+    setEditingIndex(null);
+    setEditingName('');
+  };
+
+  // Filter & sort
   const filteredPeople = useMemo(() =>
     people
       .map((p, i) => ({ ...p, originalIndex: i }))
-      .filter(o => o.name.toLowerCase().includes(search.toLowerCase())),
+      .filter(o => o.name.toLowerCase().includes(search.toLowerCase()))
+      .sort((a, b) => a.name.localeCompare(b.name)),
     [people, search]
   );
 
-  // Contadores
+  // Counters
   const totalFiltered = filteredPeople.length;
   const presentAll = people.filter(p => p.present).length;
   const absentAll = people.length - presentAll;
@@ -93,7 +115,7 @@ export default function App() {
 
       {/* Main */}
       <div className="bg-white rounded-b-xl shadow-md overflow-hidden">
-        {/* Input & Search */}
+        {/* Inputs */}
         <div className="p-6 border-b border-gray-200 space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-grow">
@@ -108,12 +130,8 @@ export default function App() {
                 className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
               />
             </div>
-            <button
-              onClick={addPerson}
-              className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition flex items-center justify-center gap-2"
-            >
-              <FontAwesomeIcon icon={faPlus} />
-              Adicionar
+            <button onClick={addPerson} className="bg-primary-500 hover:bg-primary-600 text-white px-6 py-3 rounded-lg font-medium transition flex items-center gap-2">
+              <FontAwesomeIcon icon={faPlus} /> Adicionar
             </button>
           </div>
           <div className="relative">
@@ -131,60 +149,43 @@ export default function App() {
 
         {/* Summary */}
         <div className="px-6 py-4 bg-gray-50 border-b border-gray-200 flex items-center justify-between">
-          <div className="text-gray-700">
-            <span className="font-medium">Total Filtrado:</span>
-            <span className="ml-2 font-bold">{totalFiltered}</span>
-          </div>
-          <div className="text-gray-700">
-            <span className="font-medium">Presentes:</span>
-            <span className="ml-2 font-bold text-success-600">{presentAll}</span>
-          </div>
-          <div className="text-gray-700">
-            <span className="font-medium">Ausentes:</span>
-            <span className="ml-2 font-bold text-danger-600">{absentAll}</span>
-          </div>
+          <div className="text-gray-700"><span className="font-medium">Total Filtrado:</span><span className="ml-2 font-bold">{totalFiltered}</span></div>
+          <div className="text-gray-700"><span className="font-medium">Presentes:</span><span className="ml-2 font-bold text-success-600">{presentAll}</span></div>
+          <div className="text-gray-700"><span className="font-medium">Ausentes:</span><span className="ml-2 font-bold text-danger-600">{absentAll}</span></div>
         </div>
 
         {/* List */}
         <div className="divide-y divide-gray-200">
           {filteredPeople.length === 0 ? (
             <div className="p-12 text-center">
-              <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
-                <FontAwesomeIcon icon={faUser} className="text-gray-400 text-3xl" />
-              </div>
+              <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4"><FontAwesomeIcon icon={faUser} className="text-gray-400 text-3xl" /></div>
               <h3 className="text-lg font-medium text-gray-700 mb-1">Nenhum participante encontrado</h3>
               <p className="text-gray-500">Ajuste a busca ou adicione novos participantes</p>
             </div>
           ) : (
             filteredPeople.map(person => (
               <div key={person.originalIndex} className="person-card p-4 hover:bg-gray-50">
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center">
-                      <FontAwesomeIcon icon={faUser} className="text-gray-500" />
-                    </div>
-                    <div>
-                      <h3 className="font-medium text-gray-800">{person.name}</h3>
-                      <span className={`${person.present ? 'present-badge' : 'absent-badge'} status-badge`}>{person.present ? 'Presente' : 'Ausente'}</span>
+                {editingIndex === person.originalIndex ? (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <input value={editingName} onChange={e => setEditingName(e.target.value)} className="pl-3 pr-3 py-2 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition" />
+                    <div className="flex gap-2">
+                      <button onClick={saveEdit} className="bg-success-500 hover:bg-success-600 text-white px-4 py-2 rounded-lg text-sm font-medium">Salvar</button>
+                      <button onClick={cancelEdit} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium">Cancelar</button>
                     </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => togglePresence(person.originalIndex)}
-                      className={`${person.present ? 'bg-danger-500 hover:bg-danger-600' : 'bg-success-500 hover:bg-success-600'} text-white px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2`}
-                    >
-                      <FontAwesomeIcon icon={person.present ? faTimes : faCheck} />
-                      {person.present ? 'Marcar Falta' : 'Marcar Presença'}
-                    </button>
-                    <button
-                      onClick={() => deletePerson(person.originalIndex)}
-                      className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2"
-                    >
-                      <FontAwesomeIcon icon={faTrash} />
-                      Remover
-                    </button>
+                ) : (
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex items-center gap-3">
+                      <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center"><FontAwesomeIcon icon={faUser} className="text-gray-500" /></div>
+                      <div><h3 className="font-medium text-gray-800">{person.name}</h3><span className={`${person.present ? 'present-badge' : 'absent-badge'} status-badge`}>{person.present ? 'Presente' : 'Ausente'}</span></div>
+                    </div>
+                    <div className="flex gap-2">
+                      <button onClick={() => {setEditingIndex(person.originalIndex); setEditingName(person.name);}} className="bg-primary-500 hover:bg-primary-600 text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><FontAwesomeIcon icon={faEdit} /> Editar</button>
+                      <button onClick={() => togglePresence(person.originalIndex)} className={`${person.present ? 'bg-danger-500 hover:bg-danger-600' : 'bg-success-500 hover:bg-success-600'} text-white px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2`}><FontAwesomeIcon icon={person.present ? faTimes : faCheck} /> {person.present ? 'Faltou' : 'Presente'}</button>
+                      <button onClick={() => deletePerson(person.originalIndex)} className="bg-gray-200 hover:bg-gray-300 text-gray-800 px-4 py-2 rounded-lg text-sm font-medium flex items-center gap-2"><FontAwesomeIcon icon={faTrash} /> Remover</button>
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             ))
           )}
