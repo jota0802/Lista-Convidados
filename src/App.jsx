@@ -6,7 +6,8 @@ import {
   faPlus,
   faCheck,
   faTimes,
-  faTrash
+  faTrash,
+  faSearch
 } from '@fortawesome/free-solid-svg-icons';
 
 const defaultPeople = [
@@ -37,6 +38,7 @@ export default function App() {
     return defaultPeople;
   });
   const [name, setName] = useState('');
+  const [search, setSearch] = useState('');
 
   useEffect(() => {
     localStorage.setItem('people', JSON.stringify(people));
@@ -62,8 +64,11 @@ export default function App() {
     }
   };
 
-  const total = people.length;
-  const present = people.filter(p => p.present).length;
+  const filtered = people.filter(p =>
+    p.name.toLowerCase().includes(search.toLowerCase())
+  );
+  const total = filtered.length;
+  const present = filtered.filter(p => p.present).length;
   const absent = total - present;
 
   return (
@@ -72,8 +77,7 @@ export default function App() {
       <div className="bg-gradient-to-r from-primary-500 to-primary-600 rounded-t-xl shadow-md">
         <div className="py-5 px-6 flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold text-white">Presença</h1>
-            <p className="text-primary-100 text-sm">Registro</p>
+            <h1 className="text-2xl font-bold text-white">Controle de Presença</h1>
           </div>
           <div className="bg-white/20 p-3 rounded-full">
             <FontAwesomeIcon icon={faUserCheck} className="text-white text-xl" />
@@ -84,7 +88,7 @@ export default function App() {
       {/* Main */}
       <div className="bg-white rounded-b-xl shadow-md overflow-hidden">
         {/* Input */}
-        <div className="p-6 border-b border-gray-200">
+        <div className="p-6 border-b border-gray-200 space-y-4">
           <div className="flex flex-col sm:flex-row gap-3">
             <div className="relative flex-grow">
               <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -106,6 +110,18 @@ export default function App() {
               Adicionar
             </button>
           </div>
+          {/* Search */}
+          <div className="relative">
+            <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+              <FontAwesomeIcon icon={faSearch} className="text-gray-400" />
+            </div>
+            <input
+              value={search}
+              onChange={e => setSearch(e.target.value)}
+              placeholder="Buscar participante"
+              className="pl-10 pr-4 py-3 w-full border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 transition"
+            />
+          </div>
         </div>
 
         {/* Summary */}
@@ -126,16 +142,16 @@ export default function App() {
 
         {/* List */}
         <div className="divide-y divide-gray-200">
-          {people.length === 0 ? (
+          {filtered.length === 0 ? (
             <div className="p-12 text-center">
               <div className="mx-auto w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mb-4">
                 <FontAwesomeIcon icon={faUser} className="text-gray-400 text-3xl" />
               </div>
-              <h3 className="text-lg font-medium text-gray-700 mb-1">Nenhum participante adicionado</h3>
-              <p className="text-gray-500">Adicione pessoas para começar a registrar as presenças</p>
+              <h3 className="text-lg font-medium text-gray-700 mb-1">Nenhum participante encontrado</h3>
+              <p className="text-gray-500">Ajuste a busca ou adicione novos participantes</p>
             </div>
           ) : (
-            people.map((person, idx) => (
+            filtered.map((person, idx) => (
               <div key={idx} className="person-card p-4 hover:bg-gray-50">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
